@@ -18,6 +18,10 @@ public:
     const dlms::xdlms::GetIndication& indication,
     dlms::xdlms::GetResult& result);
 
+  dlms::xdlms::XdlmsStatus HandleSet(
+    const dlms::xdlms::SetIndication& indication,
+    dlms::xdlms::SetResult& result);
+
 private:
   DlmsServer& server_;
 };

@@ -11,16 +11,21 @@ class AdapterTestObject : public dlms::cosem::ICosemObject
 public:
   AdapterTestObject()
     : readStatus(dlms::cosem::CosemStatus::Ok)
+    , writeStatus(dlms::cosem::CosemStatus::Ok)
     , readCount(0u)
+    , writeCount(0u)
+    , lastWriteAttributeId(0u)
   {
     descriptor_.key.classId = 3u;
     descriptor_.key.version = 0u;
     descriptor_.key.logicalName =
       dlms::cosem::CosemLogicalName(1, 0, 1, 8, 0, 255);
     rights_.SetAttributeAccess(
-      2u, dlms::cosem::AttributeAccessMode::ReadOnly);
+      2u, dlms::cosem::AttributeAccessMode::ReadAndWrite);
     rights_.SetAttributeAccess(
       3u, dlms::cosem::AttributeAccessMode::AuthenticatedReadOnly);
+    rights_.SetAttributeAccess(
+      4u, dlms::cosem::AttributeAccessMode::WriteOnly);
     data.push_back(0x12u);
     data.push_back(0x34u);
   }
@@ -49,10 +54,13 @@ public:
   }
 
   dlms::cosem::CosemStatus WriteAttribute(
-    std::uint8_t,
-    const dlms::cosem::CosemByteBuffer&)
+    std::uint8_t attributeId,
+    const dlms::cosem::CosemByteBuffer& input)
   {
-    return dlms::cosem::CosemStatus::AccessDenied;
+    ++writeCount;
+    lastWriteAttributeId = attributeId;
+    lastWriteData = input;
+    return writeStatus;
   }
 
   dlms::cosem::CosemStatus InvokeMethod(
@@ -66,8 +74,12 @@ public:
   dlms::cosem::CosemObjectDescriptor descriptor_;
   dlms::cosem::CosemAccessRights rights_;
   dlms::cosem::CosemStatus readStatus;
+  dlms::cosem::CosemStatus writeStatus;
   mutable std::size_t readCount;
+  std::size_t writeCount;
+  std::uint8_t lastWriteAttributeId;
   dlms::cosem::CosemByteBuffer data;
+  dlms::cosem::CosemByteBuffer lastWriteData;
 };
 
 dlms::xdlms::GetIndication MakeIndication(std::uint8_t attributeId)
@@ -79,6 +91,21 @@ dlms::xdlms::GetIndication MakeIndication(std::uint8_t attributeId)
   indication.descriptor.instanceId =
     dlms::xdlms::CosemLogicalName(1, 0, 1, 8, 0, 255);
   indication.descriptor.attributeId = attributeId;
+  return indication;
+}
+
+dlms::xdlms::SetIndication MakeSetIndication(std::uint8_t attributeId)
+{
+  dlms::xdlms::SetIndication indication =
+    dlms::xdlms::EmptySetIndication();
+  indication.invokeId = 8u;
+  indication.descriptor.classId = 3u;
+  indication.descriptor.instanceId =
+    dlms::xdlms::CosemLogicalName(1, 0, 1, 8, 0, 255);
+  indication.descriptor.attributeId = attributeId;
+  indication.data.push_back(0x12u);
+  indication.data.push_back(0x00u);
+  indication.data.push_back(0x2Au);
   return indication;
 }
 
@@ -172,6 +199,84 @@ TEST(XdlmsServerAdapter, HandleGetMapsAssociationAndStateFailures)
   context.AttachLogicalDevice(0);
   EXPECT_EQ(dlms::xdlms::XdlmsStatus::InvalidState,
             adapter.HandleGet(MakeIndication(2u), result));
+}
+
+TEST(XdlmsServerAdapter, HandleSetMapsSuccessAndForwardsData)
+{
+  dlms::server::ServerContext context;
+  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
+  const std::shared_ptr<AdapterTestObject> object(new AdapterTestObject());
+  AttachObject(context, logicalDevice, object);
+
+  dlms::server::DlmsServer server(context);
+  dlms::server::XdlmsServerAdapter adapter(server);
+  dlms::xdlms::SetResult result = dlms::xdlms::EmptySetResult();
+
+  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
+            adapter.HandleSet(MakeSetIndication(4u), result));
+
+  EXPECT_EQ(8u, result.invokeId);
+  EXPECT_EQ(0u, result.accessResult);
+  EXPECT_EQ(1u, object->writeCount);
+  EXPECT_EQ(4u, object->lastWriteAttributeId);
+  ASSERT_EQ(3u, object->lastWriteData.size());
+  EXPECT_EQ(0x12u, object->lastWriteData[0]);
+  EXPECT_EQ(0x2Au, object->lastWriteData[2]);
+}
+
+TEST(XdlmsServerAdapter, HandleSetMapsAccessDeniedToDataAccessResult)
+{
+  dlms::server::ServerContext context;
+  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
+  const std::shared_ptr<AdapterTestObject> object(new AdapterTestObject());
+  AttachObject(context, logicalDevice, object);
+
+  dlms::server::DlmsServer server(context);
+  dlms::server::XdlmsServerAdapter adapter(server);
+  dlms::xdlms::SetResult result = dlms::xdlms::EmptySetResult();
+
+  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
+            adapter.HandleSet(MakeSetIndication(3u), result));
+
+  EXPECT_EQ(8u, result.invokeId);
+  EXPECT_EQ(3u, result.accessResult);
+  EXPECT_EQ(0u, object->writeCount);
+}
+
+TEST(XdlmsServerAdapter, HandleSetMapsMissingObjectToDataAccessResult)
+{
+  dlms::server::ServerContext context;
+  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
+  context.AttachLogicalDevice(&logicalDevice);
+  context.SetAssociated(true);
+
+  dlms::server::DlmsServer server(context);
+  dlms::server::XdlmsServerAdapter adapter(server);
+  dlms::xdlms::SetResult result = dlms::xdlms::EmptySetResult();
+
+  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
+            adapter.HandleSet(MakeSetIndication(4u), result));
+
+  EXPECT_EQ(8u, result.invokeId);
+  EXPECT_EQ(4u, result.accessResult);
+}
+
+TEST(XdlmsServerAdapter, HandleSetMapsAssociationAndStateFailures)
+{
+  dlms::server::ServerContext context;
+  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
+  dlms::server::DlmsServer server(context);
+  dlms::server::XdlmsServerAdapter adapter(server);
+  dlms::xdlms::SetResult result = dlms::xdlms::EmptySetResult();
+
+  context.AttachLogicalDevice(&logicalDevice);
+  EXPECT_EQ(dlms::xdlms::XdlmsStatus::NotAssociated,
+            adapter.HandleSet(MakeSetIndication(4u), result));
+
+  context.SetAssociated(true);
+  context.AttachLogicalDevice(0);
+  EXPECT_EQ(dlms::xdlms::XdlmsStatus::InvalidState,
+            adapter.HandleSet(MakeSetIndication(4u), result));
 }
 
 TEST(XdlmsServerAdapter, StatusMappingUsesStableContracts)

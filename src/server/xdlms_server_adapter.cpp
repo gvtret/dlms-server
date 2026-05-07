@@ -77,6 +77,33 @@ dlms::xdlms::XdlmsStatus XdlmsServerAdapter::HandleGet(
   return MapServerStatusToXdlmsStatus(response.status);
 }
 
+dlms::xdlms::XdlmsStatus XdlmsServerAdapter::HandleSet(
+  const dlms::xdlms::SetIndication& indication,
+  dlms::xdlms::SetResult& result)
+{
+  ServerSetRequest request = EmptyServerSetRequest();
+  request.invokeId = indication.invokeId;
+  request.descriptor = ToServerDescriptor(indication.descriptor);
+  request.data = indication.data;
+
+  const ServerSetResponse response = server_.HandleSet(request);
+  if (response.status == ServerStatus::Ok) {
+    result = dlms::xdlms::EmptySetResult();
+    result.invokeId = response.invokeId;
+    result.accessResult = 0u;
+    return dlms::xdlms::XdlmsStatus::Ok;
+  }
+
+  if (IsDataAccessResultStatus(response.status)) {
+    result = dlms::xdlms::EmptySetResult();
+    result.invokeId = response.invokeId;
+    result.accessResult = MapServerStatusToDataAccessResult(response.status);
+    return dlms::xdlms::XdlmsStatus::Ok;
+  }
+
+  return MapServerStatusToXdlmsStatus(response.status);
+}
+
 std::uint8_t MapServerStatusToDataAccessResult(ServerStatus status)
 {
   switch (status) {
