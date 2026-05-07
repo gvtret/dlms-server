@@ -95,3 +95,49 @@ Commit message:
 ```text
 build: add dlms-server to root build
 ```
+
+## Phase 6. xDLMS Adapter Documentation
+
+Deliverables:
+
+- requirements for the xDLMS server GET adapter;
+- public API contract for `xdlms_server_adapter.hpp`;
+- adapter sequence and class diagrams;
+- adapter-specific unit test plan;
+- implementation phase split.
+
+Commit message:
+
+```text
+docs(server): define xdlms get adapter
+```
+
+## Phase 7. xDLMS GET Adapter
+
+Deliverables:
+
+- `XdlmsServerAdapter`;
+- mapping from `GetIndication` to `ServerGetRequest`;
+- mapping from `ServerGetResponse` to xDLMS data or data-access-result;
+- mapping from server infrastructure failures to `XdlmsStatus`;
+- unit tests for success, access result, and infrastructure failures.
+
+Commit message:
+
+```text
+feat(server): adapt xdlms get to server dispatch
+```
+
+## Phase 8. Root Integration Update
+
+Deliverables:
+
+- root submodule pointer update;
+- full workspace build and test run;
+- commit message for the root repo.
+
+Commit message:
+
+```text
+build: update dlms-server xdlms adapter
+```

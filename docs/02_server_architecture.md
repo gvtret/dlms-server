@@ -34,9 +34,12 @@ Allowed first-phase dependencies:
 
 - `dlms-cosem`.
 
+Active adapter dependencies:
+
+- `dlms-xdlms` for server-side normal GET indication and handler contracts.
+
 Deferred dependencies:
 
-- `dlms-xdlms` for server-side service request models when stable;
 - `dlms-association` for server association state when stable;
 - `dlms-apdu` for APDU response encoding;
 - `dlms-security` for protected association contexts.
@@ -116,7 +119,31 @@ stateDiagram-v2
 
 Requests are accepted only in `Associated` with a logical device attached.
 
-## 7. Class Interaction
+## 7. xDLMS GET Adapter Flow
+
+```mermaid
+sequenceDiagram
+  participant XD as XdlmsServerDispatcher
+  participant Adapter as XdlmsServerAdapter
+  participant Facade as DlmsServer
+  participant Dispatch as CosemServiceDispatcher
+  participant Device as LogicalDevice
+
+  XD->>Adapter: HandleGet(GetIndication)
+  Adapter->>Adapter: Map descriptor to ServerGetRequest
+  Adapter->>Facade: HandleGet(request)
+  Facade->>Dispatch: HandleGet(request)
+  Dispatch->>Device: ReadAttribute(descriptor, access)
+  Device-->>Dispatch: CosemStatus + data
+  Dispatch-->>Facade: ServerGetResponse
+  Facade-->>Adapter: ServerGetResponse
+  Adapter-->>XD: XdlmsStatus + GetResult
+```
+
+`XdlmsServerAdapter` is the only `dlms-server` module that knows about
+`dlms-xdlms`. The core dispatcher remains testable with server request models.
+
+## 8. Class Interaction
 
 ```mermaid
 classDiagram
@@ -127,6 +154,12 @@ classDiagram
   }
 
   class CosemServiceDispatcher {
+    +HandleGet()
+    +HandleSet()
+    +HandleAction()
+  }
+
+  class DlmsServer {
     +HandleGet()
     +HandleSet()
     +HandleAction()
@@ -148,13 +181,24 @@ classDiagram
     +InvokeMethod()
   }
 
+  class XdlmsServerAdapter {
+    +HandleGet()
+  }
+
+  class IXdlmsServerHandler {
+    +HandleGet()
+  }
+
+  XdlmsServerAdapter ..|> IXdlmsServerHandler
+  XdlmsServerAdapter --> DlmsServer
+  DlmsServer --> CosemServiceDispatcher
   CosemServiceDispatcher --> ServerContext
   CosemServiceDispatcher --> ServerStatusMapper
   CosemServiceDispatcher --> ResponseFactory
   ServerContext --> LogicalDevice
 ```
 
-## 8. Error Model
+## 9. Error Model
 
 The layer returns `ServerStatus` in every service response. Runtime paths do
 not throw exceptions. COSEM object errors are mapped deterministically to
@@ -163,9 +207,13 @@ server statuses.
 Output data is committed to a response only when the underlying operation
 returns success.
 
-## 9. Root Integration Strategy
+The xDLMS adapter maps object access failures into data-access-result response
+models and maps infrastructure failures, such as missing association or missing
+logical device, into `XdlmsStatus` values.
 
-Root integration shall initially add the submodule and later add
-`add_subdirectory(lib/dlms-server)` after the repository has a stable CMake
-target. End-to-end APDU tests are deferred until request/response encoding
-contracts are stable.
+## 10. Root Integration Strategy
+
+Root integration keeps `add_subdirectory(lib/dlms-xdlms)` before
+`add_subdirectory(lib/dlms-server)` so the adapter can link to the xDLMS
+contract without creating a cycle. End-to-end APDU tests are deferred until
+request/response encoding contracts are stable.

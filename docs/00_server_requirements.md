@@ -9,6 +9,11 @@ encoded by APDU/xDLMS layers.
 The first implementation targets logical-name referencing, public-client
 no-security operation, and normal GET/SET/ACTION service dispatch.
 
+The next implementation phase adds an adapter from `dlms-xdlms`
+`IXdlmsServerHandler` to this server dispatcher. The adapter is still inside
+`dlms-server` because the dependency direction is server -> xDLMS -> APDU,
+while xDLMS must not depend back on server or COSEM.
+
 ## 2. Standards Alignment Notes
 
 Doc-rag alignment used for Phase 0:
@@ -36,6 +41,7 @@ Doc-rag alignment used for Phase 0:
 - Association/session gate for "associated" versus "not associated" checks.
 - Access-context forwarding to `dlms-cosem`.
 - Response model construction without APDU byte encoding.
+- xDLMS server normal GET handler adapter.
 - Tests with fake logical devices and fake object implementations.
 
 ## 4. Out Of Scope
@@ -49,6 +55,8 @@ Doc-rag alignment used for Phase 0:
 - Block transfer.
 - Selective access.
 - Short-name referencing.
+- xDLMS SET/ACTION adapter until the xDLMS layer exposes stable server-side
+  SET/ACTION contracts.
 
 ## 5. Functional Requirements
 
@@ -100,6 +108,18 @@ The layer shall not build Association LN object lists itself. It shall rely on
 `dlms-cosem` metadata and object dispatch results. Encoding the Association LN
 `object_list` to xDLMS data is a future COSEM object concern.
 
+### 5.6 xDLMS Server GET Adapter
+
+The layer shall:
+
+- implement `dlms::xdlms::IXdlmsServerHandler`;
+- translate `dlms::xdlms::GetIndication` to `ServerGetRequest`;
+- call `DlmsServer::HandleGet`;
+- translate successful server data to `dlms::xdlms::GetResult`;
+- translate server access failures to xDLMS data-access-result values;
+- translate infrastructure failures to `dlms::xdlms::XdlmsStatus`;
+- preserve the xDLMS invoke id supplied by the dispatcher.
+
 ## 6. Non-Functional Requirements
 
 - C++11.
@@ -107,7 +127,9 @@ The layer shall not build Association LN object lists itself. It shall rely on
 - GoogleTest.
 - Runtime APIs return status codes; no public/runtime exceptions.
 - Downward dependencies only.
-- No dependency on transport or profile layers in the first dispatch module.
+- No dependency on transport or profile layers in the dispatch module.
+- The xDLMS adapter depends only on `dlms-xdlms`, `dlms-cosem`, and local
+  server APIs.
 - Output buffers remain caller-owned and are changed only on successful
   responses.
 
@@ -116,4 +138,6 @@ The layer shall not build Association LN object lists itself. It shall rely on
 - Standalone repository builds with MinGW.
 - Unit tests cover invalid input, not-associated dispatch, object not found,
   access denied, object errors, and successful GET/SET/ACTION.
+- Unit tests cover xDLMS GET adapter success, access-result mapping, and
+  infrastructure failure propagation.
 - Root integration can add the repository without dependency cycles.

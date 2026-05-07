@@ -10,6 +10,7 @@ include/dlms/server/server_types.hpp
 include/dlms/server/server_context.hpp
 include/dlms/server/service_dispatcher.hpp
 include/dlms/server/dlms_server.hpp
+include/dlms/server/xdlms_server_adapter.hpp
 ```
 
 No C ABI is planned for the first implementation.
@@ -128,7 +129,27 @@ public:
 
 It shall not own an event loop in the first implementation.
 
-## 8. Module Diagram
+## 8. xDLMS Server Adapter
+
+`XdlmsServerAdapter` bridges the decoded xDLMS server contract to the server
+facade:
+
+```cpp
+class XdlmsServerAdapter : public dlms::xdlms::IXdlmsServerHandler
+{
+public:
+  explicit XdlmsServerAdapter(DlmsServer& server);
+
+  dlms::xdlms::XdlmsStatus HandleGet(
+    const dlms::xdlms::GetIndication& indication,
+    dlms::xdlms::GetResult& result) override;
+};
+```
+
+The adapter does not encode APDU bytes. It maps the xDLMS indication into a
+`ServerGetRequest` and maps the server response into `GetResult`.
+
+## 9. Module Diagram
 
 ```mermaid
 classDiagram
@@ -161,7 +182,18 @@ classDiagram
     +InvokeMethod()
   }
 
+  class XdlmsServerAdapter {
+    -DlmsServer& server
+    +HandleGet()
+  }
+
+  class IXdlmsServerHandler {
+    +HandleGet()
+  }
+
   DlmsServer --> CosemServiceDispatcher
+  XdlmsServerAdapter ..|> IXdlmsServerHandler
+  XdlmsServerAdapter --> DlmsServer
   CosemServiceDispatcher --> ServerContext
   ServerContext --> LogicalDevice
 ```

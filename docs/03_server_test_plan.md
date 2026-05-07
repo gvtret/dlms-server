@@ -38,6 +38,16 @@
 - facade does not own the logical device;
 - facade preserves context changes.
 
+### Phase 6. xDLMS Server GET Adapter
+
+- adapter forwards class id, logical name, attribute id, and invoke id;
+- successful server GET maps to `XdlmsStatus::Ok` and data result;
+- `AccessDenied` maps to an xDLMS data-access-result;
+- `ObjectNotFound` maps to an xDLMS data-access-result;
+- `NotAssociated` maps to `XdlmsStatus::NotAssociated`;
+- `NoLogicalDevice` maps to `XdlmsStatus::InvalidState`;
+- unsupported or internal server failures map to xDLMS failure statuses.
+
 ## 2. Integration Tests
 
 Standalone integration:
