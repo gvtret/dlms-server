@@ -13,7 +13,8 @@ add_executable(dlms_server_tests
   server/test_dlms_server.cpp
   server/test_service_dispatcher.cpp
   server/test_server_context.cpp
-  server/test_server_types.cpp)
+  server/test_server_types.cpp
+  server/test_xdlms_server_adapter.cpp)
 
 target_link_libraries(dlms_server_tests
   PRIVATE
