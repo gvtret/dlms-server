@@ -16,3 +16,15 @@ Phase 0 is documentation-only. The initial implementation plan is:
 
 See `docs/` for requirements, API, architecture, test plan, and implementation
 plan.
+
+Minimal request-model usage:
+
+```cpp
+dlms::server::ServerContext context;
+context.SetAssociated(true);
+context.AttachLogicalDevice(&logicalDevice);
+
+dlms::server::DlmsServer server(context);
+dlms::server::ServerGetResponse response =
+  server.HandleGet(getRequest);
+```
