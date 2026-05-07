@@ -22,11 +22,16 @@ public:
     const dlms::xdlms::SetIndication& indication,
     dlms::xdlms::SetResult& result);
 
+  dlms::xdlms::XdlmsStatus HandleAction(
+    const dlms::xdlms::ActionIndication& indication,
+    dlms::xdlms::ActionResult& result);
+
 private:
   DlmsServer& server_;
 };
 
 std::uint8_t MapServerStatusToDataAccessResult(ServerStatus status);
+std::uint8_t MapServerStatusToActionResult(ServerStatus status);
 dlms::xdlms::XdlmsStatus MapServerStatusToXdlmsStatus(ServerStatus status);
 
 } // namespace server
