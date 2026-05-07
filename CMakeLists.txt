@@ -9,6 +9,7 @@ option(DLMS_USE_SYSTEM_GTEST "Use system-installed GoogleTest" OFF)
 
 add_library(dlms_server
   src/server/server_context.cpp
+  src/server/service_dispatcher.cpp
   src/server/server_status.cpp
   src/server/server_types.cpp)
 
