@@ -48,6 +48,17 @@
 - `NoLogicalDevice` maps to `XdlmsStatus::InvalidState`;
 - unsupported or internal server failures map to xDLMS failure statuses.
 
+### Phase 9. xDLMS Server SET Adapter
+
+- adapter forwards class id, logical name, attribute id, invoke id, and value
+  bytes;
+- successful server SET maps to `XdlmsStatus::Ok` and data-access-result `0`;
+- `AccessDenied` maps to an xDLMS data-access-result;
+- `ObjectNotFound` maps to an xDLMS data-access-result;
+- `NotAssociated` maps to `XdlmsStatus::NotAssociated`;
+- `NoLogicalDevice` maps to `XdlmsStatus::InvalidState`;
+- unsupported or internal server failures map to xDLMS failure statuses.
+
 ## 2. Integration Tests
 
 Standalone integration:

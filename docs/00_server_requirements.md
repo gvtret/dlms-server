@@ -42,6 +42,7 @@ Doc-rag alignment used for Phase 0:
 - Access-context forwarding to `dlms-cosem`.
 - Response model construction without APDU byte encoding.
 - xDLMS server normal GET handler adapter.
+- xDLMS server normal SET handler adapter.
 - Tests with fake logical devices and fake object implementations.
 
 ## 4. Out Of Scope
@@ -55,8 +56,8 @@ Doc-rag alignment used for Phase 0:
 - Block transfer.
 - Selective access.
 - Short-name referencing.
-- xDLMS SET/ACTION adapter until the xDLMS layer exposes stable server-side
-  SET/ACTION contracts.
+- xDLMS ACTION adapter until the xDLMS layer exposes a stable server-side
+  ACTION contract.
 
 ## 5. Functional Requirements
 
@@ -120,6 +121,19 @@ The layer shall:
 - translate infrastructure failures to `dlms::xdlms::XdlmsStatus`;
 - preserve the xDLMS invoke id supplied by the dispatcher.
 
+### 5.7 xDLMS Server SET Adapter
+
+The layer shall:
+
+- implement the `dlms::xdlms::IXdlmsServerHandler::HandleSet` override;
+- translate `dlms::xdlms::SetIndication` to `ServerSetRequest`;
+- pass encoded xDLMS value bytes to `DlmsServer::HandleSet`;
+- translate successful server SET to `dlms::xdlms::SetResult` with
+  data-access-result `0`;
+- translate server access failures to SET data-access-result values;
+- translate infrastructure failures to `dlms::xdlms::XdlmsStatus`;
+- preserve the xDLMS invoke id supplied by the dispatcher.
+
 ## 6. Non-Functional Requirements
 
 - C++11.
@@ -140,4 +154,6 @@ The layer shall:
   access denied, object errors, and successful GET/SET/ACTION.
 - Unit tests cover xDLMS GET adapter success, access-result mapping, and
   infrastructure failure propagation.
+- Unit tests cover xDLMS SET adapter success, access-result mapping, value
+  forwarding, and infrastructure failure propagation.
 - Root integration can add the repository without dependency cycles.

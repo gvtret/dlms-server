@@ -141,3 +141,50 @@ Commit message:
 ```text
 build: update dlms-server xdlms adapter
 ```
+
+## Phase 9. xDLMS SET Adapter Documentation
+
+Deliverables:
+
+- requirements for the xDLMS server SET adapter;
+- public API contract update for `xdlms_server_adapter.hpp`;
+- adapter sequence and class diagrams;
+- adapter-specific unit test plan;
+- implementation phase split.
+
+Commit message:
+
+```text
+docs(server): define xdlms set adapter
+```
+
+## Phase 10. xDLMS SET Adapter
+
+Deliverables:
+
+- `XdlmsServerAdapter::HandleSet`;
+- mapping from `SetIndication` to `ServerSetRequest`;
+- mapping from `ServerSetResponse` to xDLMS SET data-access-result;
+- mapping from server infrastructure failures to `XdlmsStatus`;
+- unit tests for success, access result, value forwarding, and infrastructure
+  failures.
+
+Commit message:
+
+```text
+feat(server): adapt xdlms set to server dispatch
+```
+
+## Phase 11. Root Integration Update
+
+Deliverables:
+
+- root submodule pointer update;
+- full workspace build and test run;
+- commit message for the root repo.
+
+Commit message:
+
+```text
+build: update dlms-server xdlms set adapter
+```

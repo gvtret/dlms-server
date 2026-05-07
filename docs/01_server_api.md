@@ -143,11 +143,25 @@ public:
   dlms::xdlms::XdlmsStatus HandleGet(
     const dlms::xdlms::GetIndication& indication,
     dlms::xdlms::GetResult& result) override;
+
+  dlms::xdlms::XdlmsStatus HandleSet(
+    const dlms::xdlms::SetIndication& indication,
+    dlms::xdlms::SetResult& result) override;
 };
 ```
 
 The adapter does not encode APDU bytes. It maps the xDLMS indication into a
-`ServerGetRequest` and maps the server response into `GetResult`.
+`ServerGetRequest` or `ServerSetRequest` and maps the server response into the
+corresponding xDLMS result model.
+
+SET mapping rules:
+
+- xDLMS descriptor fields map directly to `ServerSetRequest::descriptor`;
+- xDLMS encoded `Data` bytes map to `ServerSetRequest::data`;
+- `ServerStatus::Ok` maps to `SetResult::accessResult = 0`;
+- object access failures map to the same data-access-result codes used by the
+  GET adapter;
+- association and missing-device failures map to xDLMS status failures.
 
 ## 9. Module Diagram
 
@@ -185,10 +199,12 @@ classDiagram
   class XdlmsServerAdapter {
     -DlmsServer& server
     +HandleGet()
+    +HandleSet()
   }
 
   class IXdlmsServerHandler {
     +HandleGet()
+    +HandleSet()
   }
 
   DlmsServer --> CosemServiceDispatcher

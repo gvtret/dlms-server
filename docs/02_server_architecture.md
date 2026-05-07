@@ -143,7 +143,32 @@ sequenceDiagram
 `XdlmsServerAdapter` is the only `dlms-server` module that knows about
 `dlms-xdlms`. The core dispatcher remains testable with server request models.
 
-## 8. Class Interaction
+## 8. xDLMS SET Adapter Flow
+
+```mermaid
+sequenceDiagram
+  participant XD as XdlmsServerDispatcher
+  participant Adapter as XdlmsServerAdapter
+  participant Facade as DlmsServer
+  participant Dispatch as CosemServiceDispatcher
+  participant Device as LogicalDevice
+
+  XD->>Adapter: HandleSet(SetIndication)
+  Adapter->>Adapter: Map descriptor and value to ServerSetRequest
+  Adapter->>Facade: HandleSet(request)
+  Facade->>Dispatch: HandleSet(request)
+  Dispatch->>Device: WriteAttribute(descriptor, access, data)
+  Device-->>Dispatch: CosemStatus
+  Dispatch-->>Facade: ServerSetResponse
+  Facade-->>Adapter: ServerSetResponse
+  Adapter-->>XD: XdlmsStatus + SetResult
+```
+
+The adapter does not inspect or encode the xDLMS `Data` value. It passes the
+encoded value bytes to the server dispatcher, where COSEM object logic owns the
+write decision.
+
+## 9. Class Interaction
 
 ```mermaid
 classDiagram
@@ -183,10 +208,12 @@ classDiagram
 
   class XdlmsServerAdapter {
     +HandleGet()
+    +HandleSet()
   }
 
   class IXdlmsServerHandler {
     +HandleGet()
+    +HandleSet()
   }
 
   XdlmsServerAdapter ..|> IXdlmsServerHandler
@@ -198,7 +225,7 @@ classDiagram
   ServerContext --> LogicalDevice
 ```
 
-## 9. Error Model
+## 10. Error Model
 
 The layer returns `ServerStatus` in every service response. Runtime paths do
 not throw exceptions. COSEM object errors are mapped deterministically to
@@ -211,7 +238,7 @@ The xDLMS adapter maps object access failures into data-access-result response
 models and maps infrastructure failures, such as missing association or missing
 logical device, into `XdlmsStatus` values.
 
-## 10. Root Integration Strategy
+## 11. Root Integration Strategy
 
 Root integration keeps `add_subdirectory(lib/dlms-xdlms)` before
 `add_subdirectory(lib/dlms-server)` so the adapter can link to the xDLMS
