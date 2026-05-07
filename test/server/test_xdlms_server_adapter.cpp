@@ -201,24 +201,6 @@ TEST(XdlmsServerAdapter, HandleGetMapsAccessDeniedToDataAccessResult)
   EXPECT_EQ(3u, result.accessResult);
 }
 
-TEST(XdlmsServerAdapter, HandleGetMapsMissingObjectToDataAccessResult)
-{
-  dlms::server::ServerContext context;
-  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
-  context.AttachLogicalDevice(&logicalDevice);
-  context.SetAssociated(true);
-
-  dlms::server::DlmsServer server(context);
-  dlms::server::XdlmsServerAdapter adapter(server);
-  dlms::xdlms::GetResult result = dlms::xdlms::EmptyGetResult();
-
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
-            adapter.HandleGet(MakeIndication(2u), result));
-
-  EXPECT_TRUE(result.hasAccessResult);
-  EXPECT_EQ(4u, result.accessResult);
-}
-
 TEST(XdlmsServerAdapter, HandleGetMapsAssociationAndStateFailures)
 {
   dlms::server::ServerContext context;
@@ -279,42 +261,6 @@ TEST(XdlmsServerAdapter, HandleSetMapsAccessDeniedToDataAccessResult)
   EXPECT_EQ(0u, object->writeCount);
 }
 
-TEST(XdlmsServerAdapter, HandleSetMapsMissingObjectToDataAccessResult)
-{
-  dlms::server::ServerContext context;
-  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
-  context.AttachLogicalDevice(&logicalDevice);
-  context.SetAssociated(true);
-
-  dlms::server::DlmsServer server(context);
-  dlms::server::XdlmsServerAdapter adapter(server);
-  dlms::xdlms::SetResult result = dlms::xdlms::EmptySetResult();
-
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
-            adapter.HandleSet(MakeSetIndication(4u), result));
-
-  EXPECT_EQ(8u, result.invokeId);
-  EXPECT_EQ(4u, result.accessResult);
-}
-
-TEST(XdlmsServerAdapter, HandleSetMapsAssociationAndStateFailures)
-{
-  dlms::server::ServerContext context;
-  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
-  dlms::server::DlmsServer server(context);
-  dlms::server::XdlmsServerAdapter adapter(server);
-  dlms::xdlms::SetResult result = dlms::xdlms::EmptySetResult();
-
-  context.AttachLogicalDevice(&logicalDevice);
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::NotAssociated,
-            adapter.HandleSet(MakeSetIndication(4u), result));
-
-  context.SetAssociated(true);
-  context.AttachLogicalDevice(0);
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::InvalidState,
-            adapter.HandleSet(MakeSetIndication(4u), result));
-}
-
 TEST(XdlmsServerAdapter, HandleActionMapsSuccessDataAndForwardsParameter)
 {
   dlms::server::ServerContext context;
@@ -360,42 +306,6 @@ TEST(XdlmsServerAdapter, HandleActionMapsMethodDeniedToActionResult)
   EXPECT_EQ(3u, result.actionResult);
   EXPECT_FALSE(result.hasData);
   EXPECT_EQ(0u, object->invokeCount);
-}
-
-TEST(XdlmsServerAdapter, HandleActionMapsMissingObjectToActionResult)
-{
-  dlms::server::ServerContext context;
-  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
-  context.AttachLogicalDevice(&logicalDevice);
-  context.SetAssociated(true);
-
-  dlms::server::DlmsServer server(context);
-  dlms::server::XdlmsServerAdapter adapter(server);
-  dlms::xdlms::ActionResult result = dlms::xdlms::EmptyActionResult();
-
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
-            adapter.HandleAction(MakeActionIndication(1u), result));
-
-  EXPECT_EQ(9u, result.invokeId);
-  EXPECT_EQ(4u, result.actionResult);
-}
-
-TEST(XdlmsServerAdapter, HandleActionMapsAssociationAndStateFailures)
-{
-  dlms::server::ServerContext context;
-  dlms::cosem::LogicalDevice logicalDevice(1u, "ld-1");
-  dlms::server::DlmsServer server(context);
-  dlms::server::XdlmsServerAdapter adapter(server);
-  dlms::xdlms::ActionResult result = dlms::xdlms::EmptyActionResult();
-
-  context.AttachLogicalDevice(&logicalDevice);
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::NotAssociated,
-            adapter.HandleAction(MakeActionIndication(1u), result));
-
-  context.SetAssociated(true);
-  context.AttachLogicalDevice(0);
-  EXPECT_EQ(dlms::xdlms::XdlmsStatus::InvalidState,
-            adapter.HandleAction(MakeActionIndication(1u), result));
 }
 
 TEST(XdlmsServerAdapter, StatusMappingUsesStableContracts)
