@@ -188,3 +188,34 @@ Commit message:
 ```text
 build: update dlms-server xdlms set adapter
 ```
+
+## Phase 12. Server Association Context Documentation
+
+Deliverables:
+
+- association metadata requirements for server dispatch;
+- public API shape for `ServerAssociationContext`;
+- class and interaction diagrams;
+- focused test plan;
+- explicit dependency boundary excluding transport/profile/association loops.
+
+Commit message:
+
+```text
+docs(server): define association context metadata
+```
+
+## Phase 13. Server Association Context
+
+Deliverables:
+
+- `ServerAssociationContext`;
+- context setters/getters and clear helper;
+- authenticated metadata updates COSEM access context;
+- focused tests.
+
+Commit message:
+
+```text
+feat(server): add association context metadata
+```
