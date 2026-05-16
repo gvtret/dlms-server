@@ -29,6 +29,17 @@ ServerActionRequest EmptyServerActionRequest()
   return request;
 }
 
+ServerAssociationContext EmptyServerAssociationContext()
+{
+  ServerAssociationContext context;
+  context.associated = false;
+  context.clientSap = 0u;
+  context.serverSap = 0u;
+  context.authenticated = false;
+  context.ciphered = false;
+  return context;
+}
+
 ServerGetResponse MakeServerGetResponse(
   std::uint8_t invokeId,
   ServerStatus status)

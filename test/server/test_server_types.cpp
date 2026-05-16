@@ -24,6 +24,14 @@ TEST(ServerTypes, EmptyRequestsClearFields)
   EXPECT_TRUE(actionRequest.parameter.empty());
   EXPECT_EQ(dlms::cosem::CosemStatus::InvalidArgument,
             dlms::cosem::ValidateMethodDescriptor(actionRequest.descriptor));
+
+  const dlms::server::ServerAssociationContext association =
+    dlms::server::EmptyServerAssociationContext();
+  EXPECT_FALSE(association.associated);
+  EXPECT_EQ(0u, association.clientSap);
+  EXPECT_EQ(0u, association.serverSap);
+  EXPECT_FALSE(association.authenticated);
+  EXPECT_FALSE(association.ciphered);
 }
 
 TEST(ServerTypes, ResponseHelpersPreserveInvokeStatusAndData)

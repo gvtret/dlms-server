@@ -4,7 +4,7 @@ namespace dlms {
 namespace server {
 
 ServerContext::ServerContext()
-  : associated_(false)
+  : association_(EmptyServerAssociationContext())
   , accessContext_(dlms::cosem::PublicAccessContext())
   , logicalDevice_(0)
 {
@@ -12,12 +12,32 @@ ServerContext::ServerContext()
 
 void ServerContext::SetAssociated(bool associated)
 {
-  associated_ = associated;
+  association_.associated = associated;
 }
 
 bool ServerContext::IsAssociated() const
 {
-  return associated_;
+  return association_.associated;
+}
+
+void ServerContext::SetAssociationContext(
+  const ServerAssociationContext& context)
+{
+  association_ = context;
+  accessContext_ = context.authenticated
+    ? dlms::cosem::AuthenticatedAccessContext()
+    : dlms::cosem::PublicAccessContext();
+}
+
+ServerAssociationContext ServerContext::AssociationContext() const
+{
+  return association_;
+}
+
+void ServerContext::ClearAssociationContext()
+{
+  association_ = EmptyServerAssociationContext();
+  accessContext_ = dlms::cosem::PublicAccessContext();
 }
 
 void ServerContext::SetAccessContext(

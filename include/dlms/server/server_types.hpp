@@ -8,6 +8,15 @@
 namespace dlms {
 namespace server {
 
+struct ServerAssociationContext
+{
+  bool associated;
+  std::uint16_t clientSap;
+  std::uint16_t serverSap;
+  bool authenticated;
+  bool ciphered;
+};
+
 struct ServerGetRequest
 {
   std::uint8_t invokeId;
@@ -53,6 +62,7 @@ struct ServerActionResponse
 ServerGetRequest EmptyServerGetRequest();
 ServerSetRequest EmptyServerSetRequest();
 ServerActionRequest EmptyServerActionRequest();
+ServerAssociationContext EmptyServerAssociationContext();
 
 ServerGetResponse MakeServerGetResponse(
   std::uint8_t invokeId,

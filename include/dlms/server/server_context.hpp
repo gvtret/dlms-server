@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dlms/cosem/cosem.hpp"
+#include "dlms/server/server_types.hpp"
 
 namespace dlms {
 namespace server {
@@ -13,6 +14,11 @@ public:
   void SetAssociated(bool associated);
   bool IsAssociated() const;
 
+  void SetAssociationContext(
+    const ServerAssociationContext& context);
+  ServerAssociationContext AssociationContext() const;
+  void ClearAssociationContext();
+
   void SetAccessContext(
     const dlms::cosem::CosemAccessContext& context);
   dlms::cosem::CosemAccessContext AccessContext() const;
@@ -23,7 +29,7 @@ public:
   const dlms::cosem::LogicalDevice* LogicalDevice() const;
 
 private:
-  bool associated_;
+  ServerAssociationContext association_;
   dlms::cosem::CosemAccessContext accessContext_;
   dlms::cosem::LogicalDevice* logicalDevice_;
 };
