@@ -6,13 +6,14 @@ The repository owns the boundary between decoded server-side xDLMS service
 requests and the COSEM object model. It does not implement lower protocol
 codecs, transport I/O, persistent object storage, or cryptographic primitives.
 
-Phase 0 is documentation-only. The initial implementation plan is:
+Implemented public contracts include:
 
-1. server request and response contracts;
-2. GET dispatch to `dlms-cosem`;
-3. SET and ACTION dispatch;
-4. association/session gate;
-5. root integration.
+- request and response models for GET, SET, and ACTION;
+- `IServerService`, the abstract GET/SET/ACTION dispatch port;
+- `DlmsServer`, the default dispatcher over `ServerContext` and
+  `dlms-cosem::LogicalDevice`;
+- `XdlmsServerAdapter`, which bridges `dlms-xdlms::IXdlmsServerHandler` to
+  any `IServerService` implementation.
 
 See `docs/` for requirements, API, architecture, test plan, and implementation
 plan.
@@ -28,3 +29,7 @@ dlms::server::DlmsServer server(context);
 dlms::server::ServerGetResponse response =
   server.HandleGet(getRequest);
 ```
+
+Custom server backends can implement `dlms::server::IServerService` and pass
+that implementation to `XdlmsServerAdapter` or higher endpoint composition
+layers without using the default logical-device dispatcher.
