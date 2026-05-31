@@ -3,6 +3,10 @@
 namespace dlms {
 namespace server {
 
+IServerService::~IServerService()
+{
+}
+
 DlmsServer::DlmsServer(ServerContext& context)
   : dispatcher_(context)
 {

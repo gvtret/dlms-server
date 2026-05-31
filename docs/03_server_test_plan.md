@@ -41,9 +41,21 @@
 ### Phase 6. xDLMS Server GET Adapter
 
 - adapter forwards class id, logical name, attribute id, and invoke id;
+- adapter can dispatch through a fake caller-provided `IServerService`;
 - successful server GET maps to `XdlmsStatus::Ok` and data result;
 - `AccessDenied` maps to an xDLMS data-access-result;
 - `ObjectNotFound` maps to an xDLMS data-access-result;
+- `NotAssociated` maps to `XdlmsStatus::NotAssociated`;
+- `NoLogicalDevice` maps to `XdlmsStatus::InvalidState`;
+- unsupported or internal server failures map to xDLMS failure statuses.
+
+### Phase 10. xDLMS Server ACTION Adapter
+
+- adapter forwards class id, logical name, method id, invoke id, and
+  parameter bytes;
+- successful server ACTION maps to `XdlmsStatus::Ok` and action-result `0`;
+- `AccessDenied` maps to an xDLMS action result;
+- `ObjectNotFound` maps to an xDLMS action result;
 - `NotAssociated` maps to `XdlmsStatus::NotAssociated`;
 - `NoLogicalDevice` maps to `XdlmsStatus::InvalidState`;
 - unsupported or internal server failures map to xDLMS failure statuses.

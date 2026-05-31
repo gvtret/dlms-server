@@ -13,6 +13,7 @@ class XdlmsServerAdapter : public dlms::xdlms::IXdlmsServerHandler
 {
 public:
   explicit XdlmsServerAdapter(DlmsServer& server);
+  explicit XdlmsServerAdapter(IServerService& server);
 
   dlms::xdlms::XdlmsStatus HandleGet(
     const dlms::xdlms::GetIndication& indication,
@@ -27,7 +28,7 @@ public:
     dlms::xdlms::ActionResult& result);
 
 private:
-  DlmsServer& server_;
+  IServerService& server_;
 };
 
 std::uint8_t MapServerStatusToDataAccessResult(ServerStatus status);

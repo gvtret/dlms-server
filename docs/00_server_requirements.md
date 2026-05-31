@@ -43,6 +43,8 @@ Doc-rag alignment used for Phase 0:
 - Response model construction without APDU byte encoding.
 - xDLMS server normal GET handler adapter.
 - xDLMS server normal SET handler adapter.
+- xDLMS server normal ACTION handler adapter.
+- Abstract server service API for caller-provided dispatch implementations.
 - Tests with fake logical devices and fake object implementations.
 
 ## 4. Out Of Scope
@@ -56,8 +58,7 @@ Doc-rag alignment used for Phase 0:
 - Block transfer.
 - Selective access.
 - Short-name referencing.
-- xDLMS ACTION adapter until the xDLMS layer exposes a stable server-side
-  ACTION contract.
+- Long GET/SET/ACTION block transfer.
 
 ## 5. Functional Requirements
 
@@ -109,28 +110,47 @@ The layer shall not build Association LN object lists itself. It shall rely on
 `dlms-cosem` metadata and object dispatch results. Encoding the Association LN
 `object_list` to xDLMS data is a future COSEM object concern.
 
-### 5.6 xDLMS Server GET Adapter
+### 5.6 Abstract Service Boundary
+
+The layer shall expose `IServerService` as the abstract service contract for
+server-side GET/SET/ACTION dispatch. Default users may use `DlmsServer`, while
+applications that own custom dispatch, storage, access-control, or state
+management may provide their own `IServerService` implementation.
+
+### 5.7 xDLMS Server GET Adapter
 
 The layer shall:
 
 - implement `dlms::xdlms::IXdlmsServerHandler`;
 - translate `dlms::xdlms::GetIndication` to `ServerGetRequest`;
-- call `DlmsServer::HandleGet`;
+- call `IServerService::HandleGet`;
 - translate successful server data to `dlms::xdlms::GetResult`;
 - translate server access failures to xDLMS data-access-result values;
 - translate infrastructure failures to `dlms::xdlms::XdlmsStatus`;
 - preserve the xDLMS invoke id supplied by the dispatcher.
 
-### 5.7 xDLMS Server SET Adapter
+### 5.8 xDLMS Server SET Adapter
 
 The layer shall:
 
 - implement the `dlms::xdlms::IXdlmsServerHandler::HandleSet` override;
 - translate `dlms::xdlms::SetIndication` to `ServerSetRequest`;
-- pass encoded xDLMS value bytes to `DlmsServer::HandleSet`;
+- pass encoded xDLMS value bytes to `IServerService::HandleSet`;
 - translate successful server SET to `dlms::xdlms::SetResult` with
   data-access-result `0`;
 - translate server access failures to SET data-access-result values;
+- translate infrastructure failures to `dlms::xdlms::XdlmsStatus`;
+- preserve the xDLMS invoke id supplied by the dispatcher.
+
+### 5.9 xDLMS Server ACTION Adapter
+
+The layer shall:
+
+- implement the `dlms::xdlms::IXdlmsServerHandler::HandleAction` override;
+- translate `dlms::xdlms::ActionIndication` to `ServerActionRequest`;
+- pass encoded xDLMS method parameter bytes to `IServerService::HandleAction`;
+- translate successful server ACTION to `dlms::xdlms::ActionResult`;
+- translate server action failures to ACTION result values;
 - translate infrastructure failures to `dlms::xdlms::XdlmsStatus`;
 - preserve the xDLMS invoke id supplied by the dispatcher.
 
@@ -156,4 +176,8 @@ The layer shall:
   infrastructure failure propagation.
 - Unit tests cover xDLMS SET adapter success, access-result mapping, value
   forwarding, and infrastructure failure propagation.
+- Unit tests cover xDLMS ACTION adapter success, action-result mapping,
+  parameter forwarding, and infrastructure failure propagation.
+- Unit tests cover `XdlmsServerAdapter` with a fake caller-provided
+  `IServerService`.
 - Root integration can add the repository without dependency cycles.

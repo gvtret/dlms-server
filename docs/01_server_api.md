@@ -113,10 +113,26 @@ public:
 
 ## 7. Server Facade
 
-`DlmsServer` is a thin facade planned after the dispatcher is stable:
+`IServerService` is the abstract service boundary for server-side
+GET/SET/ACTION dispatch:
 
 ```cpp
-class DlmsServer
+class IServerService
+{
+public:
+  virtual ~IServerService();
+
+  virtual ServerGetResponse HandleGet(const ServerGetRequest& request) = 0;
+  virtual ServerSetResponse HandleSet(const ServerSetRequest& request) = 0;
+  virtual ServerActionResponse HandleAction(
+    const ServerActionRequest& request) = 0;
+};
+```
+
+`DlmsServer` is the default implementation over `CosemServiceDispatcher`:
+
+```cpp
+class DlmsServer : public IServerService
 {
 public:
   explicit DlmsServer(ServerContext& context);
@@ -139,6 +155,7 @@ class XdlmsServerAdapter : public dlms::xdlms::IXdlmsServerHandler
 {
 public:
   explicit XdlmsServerAdapter(DlmsServer& server);
+  explicit XdlmsServerAdapter(IServerService& server);
 
   dlms::xdlms::XdlmsStatus HandleGet(
     const dlms::xdlms::GetIndication& indication,
@@ -150,9 +167,12 @@ public:
 };
 ```
 
-The adapter does not encode APDU bytes. It maps the xDLMS indication into a
-`ServerGetRequest` or `ServerSetRequest` and maps the server response into the
-corresponding xDLMS result model.
+The adapter does not encode APDU bytes. It maps xDLMS indications into server
+GET/SET/ACTION request models and maps server responses into the corresponding
+xDLMS result models.
+
+The adapter is written against `IServerService`. The `DlmsServer&` constructor
+is retained as a compatibility shortcut.
 
 SET mapping rules:
 
@@ -178,6 +198,13 @@ classDiagram
 
   class CosemServiceDispatcher {
     -ServerContext& context
+    +HandleGet()
+    +HandleSet()
+    +HandleAction()
+  }
+
+  class IServerService {
+    <<interface>>
     +HandleGet()
     +HandleSet()
     +HandleAction()
@@ -209,7 +236,9 @@ classDiagram
 
   DlmsServer --> CosemServiceDispatcher
   XdlmsServerAdapter ..|> IXdlmsServerHandler
-  XdlmsServerAdapter --> DlmsServer
+  XdlmsServerAdapter --> IServerService
+  DlmsServer ..|> IServerService
+  DlmsServer --> CosemServiceDispatcher
   CosemServiceDispatcher --> ServerContext
   ServerContext --> LogicalDevice
 ```

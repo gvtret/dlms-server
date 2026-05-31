@@ -66,6 +66,11 @@ XdlmsServerAdapter::XdlmsServerAdapter(DlmsServer& server)
 {
 }
 
+XdlmsServerAdapter::XdlmsServerAdapter(IServerService& server)
+  : server_(server)
+{
+}
+
 dlms::xdlms::XdlmsStatus XdlmsServerAdapter::HandleGet(
   const dlms::xdlms::GetIndication& indication,
   dlms::xdlms::GetResult& result)

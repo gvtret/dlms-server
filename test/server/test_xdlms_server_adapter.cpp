@@ -102,6 +102,58 @@ public:
   dlms::cosem::CosemByteBuffer lastInvokeParameter;
 };
 
+class FakeServerService : public dlms::server::IServerService
+{
+public:
+  FakeServerService()
+    : getCalls(0)
+    , setCalls(0)
+    , actionCalls(0)
+  {
+  }
+
+  dlms::server::ServerGetResponse HandleGet(
+    const dlms::server::ServerGetRequest& request)
+  {
+    ++getCalls;
+    lastGetRequest = request;
+
+    dlms::server::ServerGetResponse response =
+      dlms::server::MakeServerGetDataResponse(
+        request.invokeId,
+        dlms::cosem::CosemByteBuffer());
+    response.data.push_back(0xA5u);
+    return response;
+  }
+
+  dlms::server::ServerSetResponse HandleSet(
+    const dlms::server::ServerSetRequest& request)
+  {
+    ++setCalls;
+    lastSetRequest = request;
+    return dlms::server::MakeServerSetResponse(
+      request.invokeId,
+      dlms::server::ServerStatus::Ok);
+  }
+
+  dlms::server::ServerActionResponse HandleAction(
+    const dlms::server::ServerActionRequest& request)
+  {
+    ++actionCalls;
+    lastActionRequest = request;
+    return dlms::server::MakeServerActionDataResponse(
+      request.invokeId,
+      dlms::cosem::CosemByteBuffer());
+  }
+
+  int getCalls;
+  int setCalls;
+  int actionCalls;
+  dlms::server::ServerGetRequest lastGetRequest;
+  dlms::server::ServerSetRequest lastSetRequest;
+  dlms::server::ServerActionRequest lastActionRequest;
+};
+
 dlms::xdlms::GetIndication MakeIndication(std::uint8_t attributeId)
 {
   dlms::xdlms::GetIndication indication =
@@ -179,6 +231,26 @@ TEST(XdlmsServerAdapter, HandleGetMapsSuccessData)
   EXPECT_EQ(0x34u, result.data[1]);
   EXPECT_FALSE(result.hasAccessResult);
   EXPECT_EQ(1u, object->readCount);
+}
+
+TEST(XdlmsServerAdapter, HandleGetCanUseAbstractServerService)
+{
+  FakeServerService service;
+  dlms::server::XdlmsServerAdapter adapter(service);
+  dlms::xdlms::GetResult result = dlms::xdlms::EmptyGetResult();
+
+  EXPECT_EQ(dlms::xdlms::XdlmsStatus::Ok,
+            adapter.HandleGet(MakeIndication(2u), result));
+
+  EXPECT_EQ(1, service.getCalls);
+  EXPECT_EQ(0, service.setCalls);
+  EXPECT_EQ(0, service.actionCalls);
+  EXPECT_EQ(6u, service.lastGetRequest.invokeId);
+  EXPECT_EQ(3u, service.lastGetRequest.descriptor.object.classId);
+  EXPECT_EQ(2u, service.lastGetRequest.descriptor.attributeId);
+  EXPECT_TRUE(result.hasData);
+  ASSERT_EQ(1u, result.data.size());
+  EXPECT_EQ(0xA5u, result.data[0]);
 }
 
 TEST(XdlmsServerAdapter, HandleGetMapsAccessDeniedToDataAccessResult)

@@ -125,7 +125,7 @@ Requests are accepted only in `Associated` with a logical device attached.
 sequenceDiagram
   participant XD as XdlmsServerDispatcher
   participant Adapter as XdlmsServerAdapter
-  participant Facade as DlmsServer
+  participant Facade as IServerService
   participant Dispatch as CosemServiceDispatcher
   participant Device as LogicalDevice
 
@@ -149,7 +149,7 @@ sequenceDiagram
 sequenceDiagram
   participant XD as XdlmsServerDispatcher
   participant Adapter as XdlmsServerAdapter
-  participant Facade as DlmsServer
+  participant Facade as IServerService
   participant Dispatch as CosemServiceDispatcher
   participant Device as LogicalDevice
 
@@ -190,6 +190,13 @@ classDiagram
     +HandleAction()
   }
 
+  class IServerService {
+    <<interface>>
+    +HandleGet()
+    +HandleSet()
+    +HandleAction()
+  }
+
   class ServerStatusMapper {
     +MapCosemStatus()
   }
@@ -217,7 +224,8 @@ classDiagram
   }
 
   XdlmsServerAdapter ..|> IXdlmsServerHandler
-  XdlmsServerAdapter --> DlmsServer
+  XdlmsServerAdapter --> IServerService
+  DlmsServer ..|> IServerService
   DlmsServer --> CosemServiceDispatcher
   CosemServiceDispatcher --> ServerContext
   CosemServiceDispatcher --> ServerStatusMapper
