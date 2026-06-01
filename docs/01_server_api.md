@@ -2,7 +2,7 @@
 
 ## 1. Public Headers
 
-Planned headers:
+Public headers:
 
 ```text
 include/dlms/server/server_status.hpp
@@ -164,6 +164,10 @@ public:
   dlms::xdlms::XdlmsStatus HandleSet(
     const dlms::xdlms::SetIndication& indication,
     dlms::xdlms::SetResult& result) override;
+
+  dlms::xdlms::XdlmsStatus HandleAction(
+    const dlms::xdlms::ActionIndication& indication,
+    dlms::xdlms::ActionResult& result) override;
 };
 ```
 
